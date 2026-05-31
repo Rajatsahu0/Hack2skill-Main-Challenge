@@ -1,8 +1,29 @@
 const { OpenAI } = require('openai');
 
-// Initialize OpenAI client if API key is provided
+// Initialize AI client - supports Groq (free), Grok (xAI), or OpenAI based on env config
 let openai = null;
-if (process.env.OPENAI_API_KEY) {
+const aiModel = process.env.AI_MODEL || 'gpt-4o-mini';
+
+if (process.env.GROQ_API_KEY) {
+  // Use Groq (FREE) - OpenAI-compatible API
+  openai = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: 'https://api.groq.com/openai/v1'
+  });
+} else if (process.env.GEMINI_API_KEY) {
+  // Use Google Gemini (FREE) - OpenAI-compatible endpoint
+  openai = new OpenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+  });
+} else if (process.env.XAI_API_KEY) {
+  // Use Grok (xAI) - compatible with OpenAI SDK
+  openai = new OpenAI({
+    apiKey: process.env.XAI_API_KEY,
+    baseURL: 'https://api.x.ai/v1'
+  });
+} else if (process.env.OPENAI_API_KEY) {
+  // Use OpenAI
   openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
@@ -56,6 +77,23 @@ const MOCK_DESTINATIONS = {
     ],
     foods: ["Sushi at Tsukiji Outer Market", "Ramen at Ichiran Shinjuku", "Tempura at Tempura Kondo", "Yakitori at Memory Lane"],
     transports: ["Tokyo Subway", "JR Yamanote Line", "Walking", "Taxi"]
+  },
+  bengaluru: {
+    lat: 12.9716,
+    lng: 77.5946,
+    attractions: [
+      { name: "Lalbagh Botanical Garden", lat: 12.9507, lng: 77.5848, type: "Nature", indoor: false },
+      { name: "Cubbon Park", lat: 12.9763, lng: 77.5929, type: "Nature", indoor: false },
+      { name: "Bangalore Palace", lat: 12.9988, lng: 77.5921, type: "History", indoor: true },
+      { name: "Vidhana Soudha", lat: 12.9796, lng: 77.5909, type: "Sightseeing", indoor: false },
+      { name: "ISKCON Temple", lat: 13.0098, lng: 77.5510, type: "Culture", indoor: true },
+      { name: "National Gallery of Modern Art", lat: 12.9890, lng: 77.5970, type: "Museum", indoor: true },
+      { name: "Commercial Street", lat: 12.9822, lng: 77.6085, type: "Shopping", indoor: false },
+      { name: "Nandi Hills", lat: 13.3702, lng: 77.6835, type: "Adventure", indoor: false },
+      { name: "Wonderla Amusement Park", lat: 12.8340, lng: 77.4010, type: "Adventure", indoor: false }
+    ],
+    foods: ["Masala Dosa at Vidyarthi Bhavan", "Bisi Bele Bath at MTR", "Biryani at Meghana Foods", "Filter Coffee at Indian Coffee House"],
+    transports: ["Metro", "Auto-rickshaw", "Ola/Uber", "BMTC Bus"]
   }
 };
 
@@ -157,7 +195,7 @@ const generateItinerary = async (params) => {
     const prompt = `
       You are an expert AI Travel Planner. Generate a day-wise travel itinerary for a trip to "${params.destination}" from ${params.startDate} to ${params.endDate}.
       Trip details:
-      - Budget: ${params.budget} USD/INR
+      - Budget: ${params.budget} INR
       - Travelers: ${params.travelers}
       - Travel Style: ${params.travelStyle}
       - Interests: ${params.interests.join(', ')}
@@ -199,7 +237,7 @@ const generateItinerary = async (params) => {
     `;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: aiModel,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.7
@@ -208,7 +246,7 @@ const generateItinerary = async (params) => {
     const resultText = response.choices[0].message.content;
     return JSON.parse(resultText);
   } catch (error) {
-    console.error("OpenAI Itinerary generation failed. Falling back to local helper:", error);
+    console.error("AI Itinerary generation failed. Falling back to local helper:", error);
     return generateLocalItinerary(params);
   }
 };
@@ -218,7 +256,7 @@ const generateItinerary = async (params) => {
  */
 const modifyItinerary = async (itinerary, userMessage, destination) => {
   if (!openai) {
-    console.log("OpenAI API key not configured. Using Mock Assistant parser.");
+    console.log("AI API key not configured. Using Mock Assistant parser.");
     return mockModifyItinerary(itinerary, userMessage, destination);
   }
 
@@ -248,7 +286,7 @@ const modifyItinerary = async (itinerary, userMessage, destination) => {
     `;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: aiModel,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.7
@@ -256,11 +294,11 @@ const modifyItinerary = async (itinerary, userMessage, destination) => {
 
     const result = JSON.parse(response.choices[0].message.content);
     return {
-      days: result.days || result, // handle potential nested structure variations
+      days: result.days || result,
       message: result.message || "I've successfully updated your itinerary."
     };
   } catch (error) {
-    console.error("OpenAI modifyItinerary failed. Falling back to mock assistant:", error);
+    console.error("AI modifyItinerary failed. Falling back to mock assistant:", error);
     return mockModifyItinerary(itinerary, userMessage, destination);
   }
 };
@@ -329,6 +367,23 @@ const mockModifyItinerary = (itinerary, userMessage, destination) => {
       });
     });
     responseMessage = "I've swapped museums and indoor galleries with beautiful open-air parks and outdoor landmarks.";
+  } else if (msg.includes("nearby") || msg.includes("hidden gem") || msg.includes("attraction")) {
+    // Add nearby/hidden gem attractions
+    const destName = destination.toLowerCase().trim();
+    const destData = MOCK_DESTINATIONS[destName] || GENERIC_DESTINATION;
+    const allAttractions = destData.attractions;
+    
+    Object.keys(daysCopy).forEach((dayKey, index) => {
+      ['morning', 'afternoon', 'evening'].forEach((slot, slotIdx) => {
+        if (daysCopy[dayKey][slot]) {
+          const newAttraction = allAttractions[(index * 3 + slotIdx + 2) % allAttractions.length];
+          daysCopy[dayKey][slot].attraction = newAttraction.name;
+          daysCopy[dayKey][slot].activity = `Discover ${newAttraction.name} — a hidden gem for ${newAttraction.type.toLowerCase()} lovers.`;
+          daysCopy[dayKey][slot].location = { lat: newAttraction.lat, lng: newAttraction.lng };
+        }
+      });
+    });
+    responseMessage = "I've updated your itinerary with nearby hidden gems and lesser-known attractions worth exploring!";
   } else {
     // Generic modification
     Object.keys(daysCopy).forEach(dayKey => {
@@ -374,7 +429,7 @@ const replanForWeather = async (itinerary, weatherCondition, destination) => {
     `;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: aiModel,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.7
@@ -383,7 +438,7 @@ const replanForWeather = async (itinerary, weatherCondition, destination) => {
     const result = JSON.parse(response.choices[0].message.content);
     return result.days || result;
   } catch (error) {
-    console.error("OpenAI replanForWeather failed. Falling back to mock replanner:", error);
+    console.error("AI replanForWeather failed. Falling back to mock replanner:", error);
     return mockReplanForWeather(itinerary, weatherCondition, destination);
   }
 };

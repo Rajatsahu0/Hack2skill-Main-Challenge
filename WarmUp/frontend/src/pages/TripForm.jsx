@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Sparkles, Calendar, DollarSign, Users, Compass, ChevronRight, Check } from 'lucide-react';
+import { Sparkles, Calendar, DollarSign, Users, Compass, ChevronRight, Check, MapPin, Train, Bus, Plane } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 
 const TRAVEL_STYLES = ['Adventure', 'Relaxed', 'Culture', 'Luxury', 'Budget-Friendly'];
@@ -12,8 +12,13 @@ export default function TripForm() {
   const navigate = useNavigate();
   const { addLocalNotification } = useSocket();
   const [loading, setLoading] = useState(false);
+
+  // Pre-fill destination from URL params (e.g., from trending section)
+  const searchParams = new URLSearchParams(window.location.search);
+  const prefillDestination = searchParams.get('destination') || '';
+
   const [formData, setFormData] = useState({
-    destination: '',
+    destination: prefillDestination,
     startDate: '',
     endDate: '',
     budget: '',
@@ -23,6 +28,32 @@ export default function TripForm() {
     pace: 'Moderate',
     constraints: ''
   });
+
+  // How to Reach state
+  const [currentCity, setCurrentCity] = useState('');
+  const [travelOptions, setTravelOptions] = useState(null);
+  const [travelLoading, setTravelLoading] = useState(false);
+  const [selectedTransport, setSelectedTransport] = useState(null);
+
+  const fetchTravelOptions = async () => {
+    if (!currentCity || !formData.destination) return;
+    setTravelLoading(true);
+    try {
+      const response = await axios.post('/api/trips/travel-options', {
+        fromCity: currentCity,
+        toCity: formData.destination,
+        travelers: Number(formData.travelers) || 1
+      });
+      if (response.data.success) {
+        setTravelOptions(response.data);
+        setSelectedTransport(null);
+      }
+    } catch (error) {
+      console.error('Error fetching travel options:', error);
+    } finally {
+      setTravelLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -162,6 +193,94 @@ export default function TripForm() {
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkbg-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
             />
           </div>
+        </div>
+
+        {/* How to Reach Section */}
+        <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-5 bg-slate-50/50 dark:bg-slate-800/20">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-violet-500" /> How to Reach — Travel Options
+          </label>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={currentCity}
+                onChange={(e) => setCurrentCity(e.target.value)}
+                placeholder="Your current city (e.g. Delhi, Mumbai)"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkbg-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all text-sm"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={fetchTravelOptions}
+              disabled={!currentCity || !formData.destination || travelLoading}
+              className="px-5 py-3 bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-semibold rounded-xl text-sm transition-all shrink-0"
+            >
+              {travelLoading ? '...' : 'Check Routes'}
+            </button>
+          </div>
+
+          {travelOptions && (
+            <div className="mt-4 space-y-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {travelOptions.fromCity} → {travelOptions.toCity} • {travelOptions.distance} • {travelOptions.travelers} traveler(s)
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {travelOptions.options.map((opt) => {
+                  const isSelected = selectedTransport === opt.mode;
+                  const budgetImpact = formData.budget ? Math.round((opt.totalCost / Number(formData.budget)) * 100) : null;
+                  return (
+                    <div
+                      key={opt.mode}
+                      onClick={() => setSelectedTransport(isSelected ? null : opt.mode)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/30 shadow-md'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xl">{opt.icon}</span>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{opt.duration}</span>
+                      </div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-white">{opt.label}</h4>
+                      <p className="text-lg font-bold text-violet-600 dark:text-violet-400 mt-1">
+                        ₹{opt.totalCost.toLocaleString('en-IN')}
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{opt.comfort}</p>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 italic mt-0.5">{opt.note}</p>
+                      
+                      {budgetImpact && (
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] text-slate-500 dark:text-slate-400">Budget impact</span>
+                            <span className={`text-[10px] font-bold ${budgetImpact > 40 ? 'text-rose-500' : budgetImpact > 20 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                              {budgetImpact}% of budget
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all ${budgetImpact > 40 ? 'bg-rose-500' : budgetImpact > 20 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                              style={{ width: `${Math.min(budgetImpact, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {selectedTransport && formData.budget && (
+                <div className="p-3 bg-violet-50 dark:bg-violet-950/20 rounded-xl border border-violet-100 dark:border-violet-900/30 text-xs text-slate-600 dark:text-slate-300">
+                  <strong>💡 Tip:</strong> With {travelOptions.options.find(o => o.mode === selectedTransport)?.label}, your remaining budget for the trip would be{' '}
+                  <strong className="text-violet-600 dark:text-violet-400">
+                    ₹{(Number(formData.budget) - travelOptions.options.find(o => o.mode === selectedTransport)?.totalCost).toLocaleString('en-IN')}
+                  </strong>{' '}
+                  for activities, food & stay.
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Travel Style */}

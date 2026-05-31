@@ -44,8 +44,9 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    // Connect to current location origin (which proxys to backend via vite.config)
-    const socketConnection = io(window.location.origin, {
+    // Connect to backend — use env variable in production, origin in development
+    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    const socketConnection = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 

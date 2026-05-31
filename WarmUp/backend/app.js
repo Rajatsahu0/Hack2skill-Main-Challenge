@@ -13,7 +13,15 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const app = express();
 
 // Enable Cross-Origin requests and JSON body parsers
-app.use(cors({ origin: '*' }));
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' ? allowedOrigins : '*',
+  credentials: true
+}));
 app.use(express.json());
 
 // Setup API Sub-routes

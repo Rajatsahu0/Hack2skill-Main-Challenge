@@ -115,6 +115,7 @@ const replanItinerary = async (req, res) => {
         description: simulateCondition.toLowerCase(),
         humidity: 90,
         windSpeed: 8.5,
+        icon: simulateCondition.includes('Rain') ? '09d' : '11d',
         isDisruptive: true
       };
     } else {

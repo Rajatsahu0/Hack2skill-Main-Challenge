@@ -6,7 +6,7 @@ const userSockets = new Map(); // userId -> socketId map
 const initSockets = (server) => {
   const io = socketIO(server, {
     cors: {
-      origin: '*', // CORS policy allowing frontend Vite dev server connection
+      origin: process.env.FRONTEND_URL || '*',
       methods: ['GET', 'POST']
     }
   });

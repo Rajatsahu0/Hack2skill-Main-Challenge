@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import { Plus, Calendar, DollarSign, Users, CloudSun, MapPin, ArrowRight, BellRing, Sparkles, Check } from 'lucide-react';
+import { Plus, Calendar, IndianRupee, Users, CloudSun, MapPin, ArrowRight, BellRing, Sparkles, Check, TrendingUp, Flame } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [trips, setTrips] = useState([]);
   const [weatherData, setWeatherData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [trending, setTrending] = useState({ season: '', destinations: [] });
 
   // Load Trips
   useEffect(() => {
@@ -31,6 +32,21 @@ export default function Dashboard() {
       }
     };
     fetchTrips();
+  }, []);
+
+  // Load Trending Destinations
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const response = await axios.get('/api/trips/trending');
+        if (response.data.success) {
+          setTrending({ season: response.data.season, destinations: response.data.destinations });
+        }
+      } catch (error) {
+        console.error('Error fetching trending:', error);
+      }
+    };
+    fetchTrending();
   }, []);
 
   const fetchWeather = async (city) => {
@@ -106,11 +122,11 @@ export default function Dashboard() {
         <div className="glass-panel p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-teal-100 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 rounded-2xl">
-              <DollarSign className="w-6 h-6" />
+              <IndianRupee className="w-6 h-6" />
             </div>
             <div>
               <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">Total Budget</p>
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-0.5">${totalBudget.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-0.5">₹{totalBudget.toLocaleString('en-IN')}</h3>
             </div>
           </div>
         </div>
@@ -118,11 +134,11 @@ export default function Dashboard() {
         <div className="glass-panel p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-2xl">
-              <DollarSign className="w-6 h-6" />
+              <IndianRupee className="w-6 h-6" />
             </div>
             <div>
               <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">Avg. Budget</p>
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-0.5">${avgBudget.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-0.5">₹{avgBudget.toLocaleString('en-IN')}</h3>
             </div>
           </div>
         </div>
@@ -139,6 +155,47 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Trending Destinations Section */}
+      {trending.destinations.length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <Flame className="w-5 h-5 text-orange-500" /> Trending This {trending.season}
+            </h2>
+            <span className="text-xs bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" /> Seasonal Picks
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trending.destinations.map((dest, idx) => (
+              <Link
+                key={idx}
+                to={`/create-trip?destination=${encodeURIComponent(dest.destination)}`}
+                className="glass-panel p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800 hover:shadow-lg hover:-translate-y-1 transition-all group cursor-pointer"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-3xl">{dest.image}</span>
+                  <span className="text-[10px] bg-violet-100 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 font-bold px-2 py-0.5 rounded-full">
+                    ₹{dest.avgBudget.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  {dest.destination}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{dest.tagline}</p>
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {dest.bestFor.map((tag, i) => (
+                    <span key={i} className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Trips & Notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -192,8 +249,8 @@ export default function Dashboard() {
                             {trip.travelers} Traveler(s)
                           </span>
                           <span className="flex items-center gap-1">
-                            <DollarSign className="w-3.5 h-3.5 text-slate-400" />
-                            Budget: ${trip.budget.toLocaleString()}
+                            <IndianRupee className="w-3.5 h-3.5 text-slate-400" />
+                            Budget: ₹{trip.budget.toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>

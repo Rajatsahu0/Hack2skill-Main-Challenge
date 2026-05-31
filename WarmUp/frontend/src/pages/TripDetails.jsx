@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useSocket } from '../context/SocketContext';
 import TravelMap from '../components/TravelMap';
 import {
-  Compass, Calendar, DollarSign, Users, Sparkles, Send, CloudRain, ShieldAlert,
+  Compass, Calendar, IndianRupee, Users, Sparkles, Send, CloudRain, ShieldAlert,
   ArrowLeft, Landmark, Utensils, Car, HelpCircle, Activity, RefreshCw, AlertTriangle
 } from 'lucide-react';
 
@@ -21,10 +21,11 @@ export default function TripDetails() {
   // Chat Assistant State
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
-    { sender: 'ai', text: 'Hi! I am your AI travel coordinator. Ask me to modify your itinerary (e.g. "reduce budget", "suggest local food", "add adventure activities").' }
+    { sender: 'ai', text: 'Hi! I\'m your AI travel coordinator for this trip. I can help you:\n• Adjust budget or costs\n• Add/remove activities\n• Suggest local food spots\n• Swap outdoor/indoor plans\n• Find nearby attractions\n\nJust type what you\'d like to change!' }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
   const [replanLoading, setReplanLoading] = useState(false);
+  const [expandedSlot, setExpandedSlot] = useState(null);
 
   const chatEndRef = useRef(null);
 
@@ -213,8 +214,8 @@ export default function TripDetails() {
               {trip.travelers} Traveler(s)
             </span>
             <span className="flex items-center gap-1">
-              <DollarSign className="w-3.5 h-3.5" />
-              Total Budget: ${trip.budget.toLocaleString()}
+              <IndianRupee className="w-3.5 h-3.5" />
+              Total Budget: ₹{trip.budget.toLocaleString('en-IN')}
             </span>
           </div>
         </div>
@@ -231,6 +232,7 @@ export default function TripDetails() {
               <div>
                 <h4 className="text-lg font-bold text-slate-800 dark:text-white">{weather.temp}°C</h4>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 capitalize">{weather.description}</p>
+                <p className="text-[9px] text-violet-500 font-semibold mt-0.5">{selectedDay.replace('day', 'Day ')}</p>
               </div>
             </div>
             
@@ -262,7 +264,7 @@ export default function TripDetails() {
               return (
                 <button
                   key={dayKey}
-                  onClick={() => setSelectedDay(dayKey)}
+                  onClick={() => { setSelectedDay(dayKey); setExpandedSlot(null); }}
                   className={`px-5 py-3 rounded-2xl text-sm font-bold border transition-all whitespace-nowrap ${
                     active
                       ? 'bg-violet-600 border-violet-650 text-white shadow-md'
@@ -285,11 +287,14 @@ export default function TripDetails() {
                   {/* Timeline Dot */}
                   <span className="absolute -left-[27px] sm:-left-[35px] top-1.5 w-6 h-6 rounded-full border-4 border-white dark:border-darkbg-900 bg-brand-500 shadow-md"></span>
                   
-                  <div className="glass-panel p-5 sm:p-6 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-brand-500">
+                  <div 
+                    onClick={() => setExpandedSlot(expandedSlot === 'morning' ? null : 'morning')}
+                    className="glass-panel p-5 sm:p-6 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-brand-500 cursor-pointer"
+                  >
                     <div className="flex items-center justify-between gap-4 mb-2">
                       <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Morning Activity</span>
                       <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-500 font-semibold">
-                        Cost: ${daySchedule.morning.cost || 0}
+                        Cost: ₹{daySchedule.morning.cost || 0}
                       </span>
                     </div>
                     <h3 className="text-lg font-bold text-slate-850 dark:text-white flex items-center gap-1.5">
@@ -299,6 +304,12 @@ export default function TripDetails() {
                     <p className="text-sm text-slate-550 dark:text-slate-400 mt-2 leading-relaxed">
                       {daySchedule.morning.activity}
                     </p>
+                    
+                    {expandedSlot === 'morning' && (
+                      <div className="mt-3 p-3 bg-violet-50/50 dark:bg-violet-950/20 rounded-xl text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-violet-100 dark:border-violet-900/30 animate-fade-in">
+                        <p className="font-medium">📍 {daySchedule.morning.attraction} — A popular spot in {trip.destination} perfect for morning exploration. Enjoy the calm atmosphere and take in the local culture before the crowds arrive.</p>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/40 text-xs text-slate-450 dark:text-slate-500">
                       <div className="flex items-center gap-1.5">
@@ -320,11 +331,14 @@ export default function TripDetails() {
                   {/* Timeline Dot */}
                   <span className="absolute -left-[27px] sm:-left-[35px] top-1.5 w-6 h-6 rounded-full border-4 border-white dark:border-darkbg-900 bg-accent-500 shadow-md"></span>
                   
-                  <div className="glass-panel p-5 sm:p-6 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-accent-500">
+                  <div 
+                    onClick={() => setExpandedSlot(expandedSlot === 'afternoon' ? null : 'afternoon')}
+                    className="glass-panel p-5 sm:p-6 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-accent-500 cursor-pointer"
+                  >
                     <div className="flex items-center justify-between gap-4 mb-2">
                       <span className="text-xs font-bold text-accent-600 dark:text-accent-400 uppercase tracking-wider">Afternoon Activity</span>
                       <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-500 font-semibold">
-                        Cost: ${daySchedule.afternoon.cost || 0}
+                        Cost: ₹{daySchedule.afternoon.cost || 0}
                       </span>
                     </div>
                     <h3 className="text-lg font-bold text-slate-850 dark:text-white flex items-center gap-1.5">
@@ -334,6 +348,12 @@ export default function TripDetails() {
                     <p className="text-sm text-slate-550 dark:text-slate-400 mt-2 leading-relaxed">
                       {daySchedule.afternoon.activity}
                     </p>
+                    
+                    {expandedSlot === 'afternoon' && (
+                      <div className="mt-3 p-3 bg-teal-50/50 dark:bg-teal-950/20 rounded-xl text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-teal-100 dark:border-teal-900/30 animate-fade-in">
+                        <p className="font-medium">📍 {daySchedule.afternoon.attraction} — An ideal afternoon destination in {trip.destination}. Great for immersive experiences with plenty of food and activity options nearby.</p>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/40 text-xs text-slate-450 dark:text-slate-500">
                       <div className="flex items-center gap-1.5">
@@ -355,11 +375,14 @@ export default function TripDetails() {
                   {/* Timeline Dot */}
                   <span className="absolute -left-[27px] sm:-left-[35px] top-1.5 w-6 h-6 rounded-full border-4 border-white dark:border-darkbg-900 bg-amber-500 shadow-md"></span>
                   
-                  <div className="glass-panel p-5 sm:p-6 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-amber-500">
+                  <div 
+                    onClick={() => setExpandedSlot(expandedSlot === 'evening' ? null : 'evening')}
+                    className="glass-panel p-5 sm:p-6 rounded-3xl shadow-sm hover:shadow-md transition-all border-l-4 border-amber-500 cursor-pointer"
+                  >
                     <div className="flex items-center justify-between gap-4 mb-2">
                       <span className="text-xs font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wider">Evening Activity</span>
                       <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-500 font-semibold">
-                        Cost: ${daySchedule.evening.cost || 0}
+                        Cost: ₹{daySchedule.evening.cost || 0}
                       </span>
                     </div>
                     <h3 className="text-lg font-bold text-slate-850 dark:text-white flex items-center gap-1.5">
@@ -369,6 +392,12 @@ export default function TripDetails() {
                     <p className="text-sm text-slate-550 dark:text-slate-400 mt-2 leading-relaxed">
                       {daySchedule.evening.activity}
                     </p>
+                    
+                    {expandedSlot === 'evening' && (
+                      <div className="mt-3 p-3 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-amber-100 dark:border-amber-900/30 animate-fade-in">
+                        <p className="font-medium">📍 {daySchedule.evening.attraction} — Wind down your day at this evening hotspot in {trip.destination}. Perfect for relaxation, dining, and soaking in the local nightlife atmosphere.</p>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/40 text-xs text-slate-450 dark:text-slate-500">
                       <div className="flex items-center gap-1.5">
@@ -437,32 +466,39 @@ export default function TripDetails() {
             {/* Quick Prompts */}
             <div className="p-2 border-b border-slate-100 dark:border-slate-850 flex gap-1.5 overflow-x-auto shrink-0 bg-slate-50/50 dark:bg-slate-900/20">
               <button
-                onClick={() => handleChatSubmit(null, 'Reduce budget')}
+                onClick={() => handleChatSubmit(null, 'Reduce budget by 30%')}
                 disabled={chatLoading}
                 className="text-[10px] px-2.5 py-1.5 bg-white dark:bg-darkbg-800 hover:bg-slate-55 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200/40 dark:border-slate-700 text-slate-600 dark:text-slate-350 font-bold shrink-0"
               >
-                Reduce Budget
+                💰 Cut Budget
               </button>
               <button
-                onClick={() => handleChatSubmit(null, 'Add adventure activities')}
+                onClick={() => handleChatSubmit(null, 'Add adventure and outdoor activities')}
                 disabled={chatLoading}
                 className="text-[10px] px-2.5 py-1.5 bg-white dark:bg-darkbg-800 hover:bg-slate-55 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200/40 dark:border-slate-700 text-slate-600 dark:text-slate-350 font-bold shrink-0"
               >
-                Add Adventure
+                🏔️ Adventure
               </button>
               <button
-                onClick={() => handleChatSubmit(null, 'Suggest local food')}
+                onClick={() => handleChatSubmit(null, 'Suggest the best local food and street food spots')}
                 disabled={chatLoading}
                 className="text-[10px] px-2.5 py-1.5 bg-white dark:bg-darkbg-800 hover:bg-slate-55 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200/40 dark:border-slate-700 text-slate-600 dark:text-slate-350 font-bold shrink-0"
               >
-                Local Food
+                🍜 Local Food
               </button>
               <button
-                onClick={() => handleChatSubmit(null, 'Remove museums')}
+                onClick={() => handleChatSubmit(null, 'Remove all museums and replace with outdoor activities')}
                 disabled={chatLoading}
                 className="text-[10px] px-2.5 py-1.5 bg-white dark:bg-darkbg-800 hover:bg-slate-55 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200/40 dark:border-slate-700 text-slate-600 dark:text-slate-350 font-bold shrink-0"
               >
-                No Museums
+                🚫 No Museums
+              </button>
+              <button
+                onClick={() => handleChatSubmit(null, 'Show nearby attractions and hidden gems')}
+                disabled={chatLoading}
+                className="text-[10px] px-2.5 py-1.5 bg-white dark:bg-darkbg-800 hover:bg-slate-55 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200/40 dark:border-slate-700 text-slate-600 dark:text-slate-350 font-bold shrink-0"
+              >
+                📍 Nearby
               </button>
             </div>
 
