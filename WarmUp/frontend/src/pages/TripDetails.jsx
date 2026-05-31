@@ -503,7 +503,7 @@ export default function TripDetails() {
             </div>
 
             {/* Message Pane */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5" role="log" aria-live="polite" aria-label="Chat conversation with AI assistant">
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -541,6 +541,8 @@ export default function TripDetails() {
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask assistant to update plans..."
                 disabled={chatLoading}
+                aria-label="Type a message to the AI travel assistant"
+                role="textbox"
                 className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkbg-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-violet-500 disabled:opacity-50"
               />
               <button

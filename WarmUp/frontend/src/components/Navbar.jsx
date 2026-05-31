@@ -27,13 +27,13 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass-panel shadow-sm border-b border-slate-200/50 dark:border-slate-800/50 transition-all duration-300">
+    <nav className="sticky top-0 z-50 glass-panel shadow-sm border-b border-slate-200/50 dark:border-slate-800/50 transition-all duration-300" role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-2 text-violet-600 dark:text-violet-400 group">
-              <Compass className="w-8 h-8 transform group-hover:rotate-45 transition-transform duration-300" />
+            <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-2 text-violet-600 dark:text-violet-400 group" aria-label="RoamAI - Go to homepage">
+              <Compass className="w-8 h-8 transform group-hover:rotate-45 transition-transform duration-300" aria-hidden="true" />
               <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-violet-600 to-teal-500 bg-clip-text text-transparent">RoamAI</span>
             </Link>
           </div>
@@ -44,9 +44,10 @@ export default function Navbar() {
             <button
               onClick={() => setDark(!dark)}
               className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="Toggle Theme"
+              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-pressed={dark}
             >
-              {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {dark ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
             </button>
 
             {user && (
@@ -56,8 +57,12 @@ export default function Navbar() {
                   <button
                     onClick={() => setShowNotifications(!showNotifications)}
                     className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
+                    aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+                    aria-expanded={showNotifications}
+                    aria-haspopup="true"
+                    aria-controls="notification-dropdown"
                   >
-                    <Bell className="w-5 h-5" />
+                    <Bell className="w-5 h-5" aria-hidden="true" />
                     {unreadCount > 0 && (
                       <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-darkbg-900 animate-pulse">
                         {unreadCount}
@@ -67,7 +72,13 @@ export default function Navbar() {
 
                   {/* Dropdown Menu */}
                   {showNotifications && (
-                    <div className="absolute right-0 mt-3 w-80 sm:w-96 rounded-2xl bg-white dark:bg-darkbg-800 shadow-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden z-50 animate-slide-up">
+                    <div
+                      id="notification-dropdown"
+                      role="menu"
+                      aria-label="Notifications list"
+                      className="absolute right-0 mt-3 w-80 sm:w-96 rounded-2xl bg-white dark:bg-darkbg-800 shadow-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden z-50 animate-slide-up"
+                      onKeyDown={(e) => { if (e.key === 'Escape') setShowNotifications(false); }}
+                    >
                       <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                         <h3 className="font-semibold text-slate-800 dark:text-white">Alerts & Notifications</h3>
                         <span className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-300 font-medium">

@@ -41,39 +41,43 @@ export default function Login() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50 dark:bg-darkbg-900 px-4 transition-colors">
-      <div className="max-w-md w-full glass-panel rounded-3xl p-8 shadow-xl border border-slate-200/50 dark:border-slate-800 animate-slide-up">
+      <div className="max-w-md w-full glass-panel rounded-3xl p-8 shadow-xl border border-slate-200/50 dark:border-slate-800 animate-slide-up" role="region" aria-labelledby="login-heading">
         {/* Header */}
         <div className="text-center mb-6">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-violet-600 dark:text-violet-400 font-extrabold text-2xl mb-2">
-            <Compass className="w-7 h-7" /> RoamAI
+          <Link to="/" className="inline-flex items-center gap-1.5 text-violet-600 dark:text-violet-400 font-extrabold text-2xl mb-2" aria-label="Go to RoamAI homepage">
+            <Compass className="w-7 h-7" aria-hidden="true" /> RoamAI
           </Link>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Sign in to your account</h2>
+          <h2 id="login-heading" className="text-xl font-bold text-slate-800 dark:text-white">Sign in to your account</h2>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">Welcome back! Access your itineraries.</p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-4 p-3.5 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-450 rounded-2xl flex items-center gap-2 text-xs font-semibold">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div role="alert" aria-live="assertive" className="mb-4 p-3.5 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-450 rounded-2xl flex items-center gap-2 text-xs font-semibold">
+            <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Login form" noValidate>
           {/* Email */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 pl-1">Email Address</label>
+            <label htmlFor="login-email" className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 pl-1">Email Address</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500" aria-hidden="true">
                 <Mail className="w-4.5 h-4.5" />
               </span>
               <input
+                id="login-email"
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="john@example.com"
                 required
+                autoComplete="email"
+                aria-label="Email address"
+                aria-required="true"
                 className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkbg-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
               />
             </div>
@@ -81,18 +85,22 @@ export default function Login() {
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 pl-1">Password</label>
+            <label htmlFor="login-password" className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5 pl-1">Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500" aria-hidden="true">
                 <Lock className="w-4.5 h-4.5" />
               </span>
               <input
+                id="login-password"
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
+                aria-label="Password"
+                aria-required="true"
                 className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkbg-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
               />
             </div>
@@ -102,6 +110,8 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
+            aria-label={loading ? 'Signing in, please wait' : 'Sign in to your account'}
+            aria-busy={loading}
             className="w-full py-3.5 mt-2 bg-violet-600 hover:bg-violet-750 disabled:bg-violet-800 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-1.5"
           >
             {loading ? 'Signing In...' : 'Login'}
@@ -111,7 +121,7 @@ export default function Login() {
         {/* Redirect */}
         <div className="text-center mt-6 text-xs text-slate-550 dark:text-slate-450">
           New to RoamAI?{' '}
-          <Link to="/register" className="text-violet-600 hover:text-violet-750 dark:text-violet-400 dark:hover:text-violet-300 font-bold">
+          <Link to="/register" className="text-violet-600 hover:text-violet-750 dark:text-violet-400 dark:hover:text-violet-300 font-bold" aria-label="Create a new account">
             Sign Up
           </Link>
         </div>

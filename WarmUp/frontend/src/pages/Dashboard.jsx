@@ -78,10 +78,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-darkbg-900 transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-darkbg-900 transition-colors duration-300" role="status" aria-label="Loading dashboard">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Loading your dashboard...</p>
+          <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" aria-hidden="true"></div>
+          <p className="text-slate-500 dark:text-slate-400 font-medium" aria-live="polite">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -306,7 +306,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="glass-panel rounded-3xl p-6 max-h-[500px] overflow-y-auto border border-slate-200/50 dark:border-slate-800">
+          <div className="glass-panel rounded-3xl p-6 max-h-[500px] overflow-y-auto border border-slate-200/50 dark:border-slate-800" role="log" aria-live="polite" aria-label="Notification feed">
             {notifications.length === 0 ? (
               <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
                 No recent notifications logs
