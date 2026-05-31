@@ -15,11 +15,18 @@ const app = express();
 // Enable Cross-Origin requests and JSON body parsers
 const allowedOrigins = [
   'http://localhost:3000',
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  /\.vercel\.app$/
 ].filter(Boolean);
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? allowedOrigins : '*',
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.some(o => o instanceof RegExp ? o.test(origin) : o === origin)) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Allow all in production for now
+  },
   credentials: true
 }));
 app.use(express.json());
