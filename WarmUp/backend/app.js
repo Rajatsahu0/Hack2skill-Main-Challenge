@@ -60,6 +60,20 @@ const rateLimit = (req, res, next) => {
 
 app.use(rateLimit);
 
+// Input sanitization
+const { sanitizeInput } = require('./middleware/validate');
+app.use(sanitizeInput);
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
 // Setup API Sub-routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
