@@ -25,11 +25,40 @@ app.use(cors({
     if (allowedOrigins.some(o => o instanceof RegExp ? o.test(origin) : o === origin)) {
       return callback(null, true);
     }
-    return callback(null, true); // Allow all in production for now
+    return callback(null, true);
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map();
+const rateLimit = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const windowMs = 60000; // 1 minute
+  const maxRequests = 100;
+
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, { count: 1, start: now });
+    return next();
+  }
+
+  const record = rateLimitMap.get(ip);
+  if (now - record.start > windowMs) {
+    rateLimitMap.set(ip, { count: 1, start: now });
+    return next();
+  }
+
+  if (record.count >= maxRequests) {
+    return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+  }
+
+  record.count++;
+  next();
+};
+
+app.use(rateLimit);
 
 // Setup API Sub-routes
 app.use('/api/auth', authRoutes);

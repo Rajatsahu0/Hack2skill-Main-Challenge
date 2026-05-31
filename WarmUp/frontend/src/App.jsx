@@ -55,7 +55,7 @@ export default function App() {
         <SocketProvider>
           <div className="min-h-screen flex flex-col bg-slate-50 text-slate-905 dark:bg-darkbg-900 dark:text-slate-100 transition-colors duration-300">
             <Navbar />
-            <main className="flex-grow">
+            <main className="flex-grow" role="main" aria-label="Main content">
               <Routes>
                 {/* Public Access Only (Redirects to dashboard if logged in) */}
                 <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
